@@ -30,17 +30,9 @@ import time
 
 #FindWand is called to find all potential wands in a scene.  These are then tracked as points for movement.  The scene is reset every 3 seconds.
 def FindNewPoints():
-    global old_frame,old_gray,p0,mask,color,ig,img,frame
+    global old_frame,old_gray,p0,mask,color,ig,img
     
-    # Read next frame from camera
-    returnCode, old_frame = cam.read()
-    
-    # If returnCode is not true, error has occured
-    if not returnCode:
-        print("Error reading from camera")
-        return False
-
-    cv2.flip(old_frame,1,old_frame)
+    old_frame = getFrame(cam)
     old_gray = cv2.cvtColor(old_frame,cv2.COLOR_BGR2GRAY)
 
     #TODO: trained image recognition
@@ -56,7 +48,7 @@ def FindNewPoints():
     return True
     
 def TrackWand():
-    global old_frame,old_gray,p0,mask,color,ig,img,frame
+    global old_frame,old_gray,p0,mask,color,ig,img
     
     # Parameters for image processing
     lk_params = dict( winSize  = (15,15),
@@ -65,15 +57,8 @@ def TrackWand():
     movment_threshold = 80
 
     color = (0,0,255)
-    # Read next frame from camera
-    returnCode, old_frame = cam.read()
     
-    # If returnCode is not true, error has occured
-    if not returnCode:
-        print("Error reading from camera")
-        return False
-
-    cv2.flip(old_frame,1,old_frame)
+    old_frame = getFrame(cam)
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
     # Take first frame and find circles in it
@@ -87,15 +72,7 @@ def TrackWand():
     mask = np.zeros_like(old_frame)
 
     while True:
-        # Read next frame from camera
-        returnCode, frame = cam.read()
-        
-        # If returnCode is not true, error has occured
-        if not returnCode:
-            print("Error reading from camera")
-            return False
-
-        cv2.flip(frame,1,frame)
+        frame = getFrame(cam)
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         try:
@@ -133,13 +110,7 @@ def TrackWand():
         cv2.waitKey(1)
 
         # get next frame
-        # Read next frame from camera
-        returnCode, old_frame = cam.read()
-        
-        # If returnCode is not true, error has occured
-        if not returnCode:
-            print("Error reading from camera")
-            return False
+        old_frame = getFrame(cam)
 
         # Now update the previous frame and previous points
         old_gray = frame_gray.copy()
@@ -189,6 +160,18 @@ def IsGesture(a,b,c,d,i):
 def End():
 	cam.release()
 	cv2.destroyAllWindows()
+
+# Get the next frame from the camera feed
+def getFrame(cam):
+    # Read next frame from camera
+    returnCode, frame = cam.read()
+
+    # If returnCode is not true, error has occured
+    if not returnCode:
+        raise Exception("Error reading from camera")
+
+    cv2.flip(frame,1,frame)
+    return frame
 
 # Starts camera input and runs FindNewPoints
 if __name__=="__main__":
