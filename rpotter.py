@@ -79,10 +79,6 @@ def FindNewPoints():
         old_frame = cv2.imdecode(data, 1)
         cv2.flip(old_frame,1,old_frame)
         old_gray = cv2.cvtColor(old_frame,cv2.COLOR_BGR2GRAY)
-        #cv2.equalizeHist(old_gray,old_gray)
-	    #old_gray = cv2.GaussianBlur(old_gray,(9,9),1.5)
-        #dilate_kernel = np.ones(dilation_params, np.uint8)
-        #old_gray = cv2.dilate(old_gray, dilate_kernel, iterations=1)
 
         #TODO: trained image recognition
         p0 = cv2.HoughCircles(old_gray,cv2.HOUGH_GRADIENT,3,100,param1=100,param2=30,minRadius=4,maxRadius=15)
@@ -111,10 +107,7 @@ def TrackWand():
     old_frame = cv2.imdecode(data, 1)
     cv2.flip(old_frame,1,old_frame)
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
-    #cv2.equalizeHist(old_gray,old_gray)
-    #old_gray = cv2.GaussianBlur(old_gray,(9,9),1.5)
-    #dilate_kernel = np.ones(dilation_params, np.uint8)
-    #old_gray = cv2.dilate(old_gray, dilate_kernel, iterations=1)
+
     # Take first frame and find circles in it
     p0 = cv2.HoughCircles(old_gray,cv2.HOUGH_GRADIENT,3,100,param1=100,param2=30,minRadius=4,maxRadius=15)
     try:
@@ -131,10 +124,7 @@ def TrackWand():
         frame = cv2.imdecode(data2, 1)
         cv2.flip(frame,1,frame)
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #equalizeHist(frame_gray,frame_gray)
-        #frame_gray = GaussianBlur(frame_gray,(9,9),1.5)
-        #dilate_kernel = np.ones(dilation_params, np.uint8)
-        #frame_gray = cv2.dilate(frame_gray, dilate_kernel, iterations=1)
+
         try:
             # calculate optical flow
             p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
