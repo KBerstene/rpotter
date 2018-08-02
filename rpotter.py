@@ -58,6 +58,7 @@ def FindNewPoints():
         old_frame = cam.capture(stream, format='jpeg')
     except:
         print("resetting points")
+        return False
     data = np.fromstring(stream.getvalue(), dtype=np.uint8)
     old_frame = cv2.imdecode(data, 1)
     cv2.flip(old_frame,1,old_frame)
@@ -73,6 +74,7 @@ def FindNewPoints():
     TrackWand()
     #This resets the scene every three seconds
     threading.Timer(3, FindNewPoints).start()
+    return True
     
 def TrackWand():
     global old_frame,old_gray,p0,mask,color,ig,img,frame
@@ -199,9 +201,14 @@ if __name__=="__main__":
     cam.resolution = (640, 480)
     cam.framerate = 24
     try:
-        while True:
-            FindNewPoints()
+        running = True
+        while running:
+            if not FindNewPoints():
+                running = False
+            elif cv2.getWindowProperty("Raspberry Potter", 0) < 0:
+                # Is window still open? If not, stop running
+                running = False
     except KeyboardInterrupt:
-        End()
-        exit
-
+        pass
+    End()
+    exit
