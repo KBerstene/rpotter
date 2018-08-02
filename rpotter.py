@@ -166,7 +166,7 @@ def TrackWand():
 
         cv2.putText(img, "Press ESC to close.", (5, 25),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255))
-        cv2.imshow("Raspberry Potter", frame)
+        cv2.imshow("Raspberry Potter", img)
         cv2.waitKey(1)
 
         # get next frame
