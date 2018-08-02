@@ -28,12 +28,6 @@ import threading
 import math
 import time
 
-# Parameters for image processing
-lk_params = dict( winSize  = (15,15),
-                maxLevel = 2,
-                criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-movment_threshold = 80
-
 #FindWand is called to find all potential wands in a scene.  These are then tracked as points for movement.  The scene is reset every 3 seconds.
 def FindNewPoints():
     global old_frame,old_gray,p0,mask,color,ig,img,frame
@@ -64,6 +58,12 @@ def FindNewPoints():
 def TrackWand():
     global old_frame,old_gray,p0,mask,color,ig,img,frame
     
+    # Parameters for image processing
+    lk_params = dict( winSize  = (15,15),
+                    maxLevel = 2,
+                    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+    movment_threshold = 80
+
     color = (0,0,255)
     # Read next frame from camera
     returnCode, old_frame = cam.read()
