@@ -55,31 +55,25 @@ movment_threshold = 80
 def FindNewPoints():
     global old_frame,old_gray,p0,mask,color,ig,img,frame
     try:
-        try:
-            old_frame = cam.capture(stream, format='jpeg')
-        except:
-            print("resetting points")
-        data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-        old_frame = cv2.imdecode(data, 1)
-        cv2.flip(old_frame,1,old_frame)
-        old_gray = cv2.cvtColor(old_frame,cv2.COLOR_BGR2GRAY)
-
-        #TODO: trained image recognition
-        p0 = cv2.HoughCircles(old_gray,cv2.HOUGH_GRADIENT,3,100,param1=100,param2=30,minRadius=4,maxRadius=15)
-        p0.shape = (p0.shape[1], 1, p0.shape[2])
-        p0 = p0[:,:,0:2]
-        mask = np.zeros_like(old_frame)
-        ig = [[0] for x in range(20)]
-        print("finding...")
-        TrackWand()
-	    #This resets the scene every three seconds
-        threading.Timer(3, FindNewPoints).start()
+        old_frame = cam.capture(stream, format='jpeg')
     except:
-        e = sys.exc_info()[1]
-        print("FindWand Error: %s" % e )
-        End()
-        exit
+        print("resetting points")
+    data = np.fromstring(stream.getvalue(), dtype=np.uint8)
+    old_frame = cv2.imdecode(data, 1)
+    cv2.flip(old_frame,1,old_frame)
+    old_gray = cv2.cvtColor(old_frame,cv2.COLOR_BGR2GRAY)
 
+    #TODO: trained image recognition
+    p0 = cv2.HoughCircles(old_gray,cv2.HOUGH_GRADIENT,3,100,param1=100,param2=30,minRadius=4,maxRadius=15)
+    p0.shape = (p0.shape[1], 1, p0.shape[2])
+    p0 = p0[:,:,0:2]
+    mask = np.zeros_like(old_frame)
+    ig = [[0] for x in range(20)]
+    print("finding...")
+    TrackWand()
+    #This resets the scene every three seconds
+    threading.Timer(3, FindNewPoints).start()
+    
 def TrackWand():
     global old_frame,old_gray,p0,mask,color,ig,img,frame
     color = (0,0,255)
