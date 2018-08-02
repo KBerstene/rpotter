@@ -22,45 +22,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 '''
 import io
 import sys
-sys.path.insert(1, '/usr/lib/python2.7/dist-packages/picamera')
-import picamera
 import numpy as np
 import cv2
 import threading
 import math
 import time
-import pigpio
-
-GPIOS = 32
-MODES = ["INPUT", "OUTPUT", "ALT5", "ALT4", "ALT0", "ALT1", "ALT2", "ALT3"]
-
-pi = pigpio.pi()
-
-#pin for Powerswitch (Lumos,Nox)
-switch_pin = 16
-pi.set_mode(switch_pin,pigpio.OUTPUT)
-
-#pin for Trinket (Colovario)
-trinket_pin = 12
-pi.set_mode(trinket_pin,pigpio.OUTPUT)
 
 # Parameters for image processing
 lk_params = dict( winSize  = (15,15),
                 maxLevel = 2,
                 criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-dilation_params = (5, 5)
 movment_threshold = 80
 
 #FindWand is called to find all potential wands in a scene.  These are then tracked as points for movement.  The scene is reset every 3 seconds.
 def FindNewPoints():
     global old_frame,old_gray,p0,mask,color,ig,img,frame
-    try:
-        old_frame = cam.capture(stream, format='jpeg')
-    except:
-        print("resetting points")
+    
+    # Read next frame from camera
+    returnCode, old_frame = cam.read()
+    
+    # If returnCode is not true, error has occured
+    if not returnCode:
+        print("Error reading from camera")
         return False
-    data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-    old_frame = cv2.imdecode(data, 1)
+
     cv2.flip(old_frame,1,old_frame)
     old_gray = cv2.cvtColor(old_frame,cv2.COLOR_BGR2GRAY)
 
@@ -78,13 +63,16 @@ def FindNewPoints():
     
 def TrackWand():
     global old_frame,old_gray,p0,mask,color,ig,img,frame
+    
     color = (0,0,255)
-    try:
-        old_frame = cam.capture(stream, format='jpeg')
-    except:
-        print("resetting points")
-    data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-    old_frame = cv2.imdecode(data, 1)
+    # Read next frame from camera
+    returnCode, old_frame = cam.read()
+    
+    # If returnCode is not true, error has occured
+    if not returnCode:
+        print("Error reading from camera")
+        return False
+
     cv2.flip(old_frame,1,old_frame)
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
@@ -99,9 +87,14 @@ def TrackWand():
     mask = np.zeros_like(old_frame)
 
     while True:
-        frame = cam.capture(stream, format='jpeg')
-        data2 = np.fromstring(stream.getvalue(), dtype=np.uint8)
-        frame = cv2.imdecode(data2, 1)
+        # Read next frame from camera
+        returnCode, frame = cam.read()
+        
+        # If returnCode is not true, error has occured
+        if not returnCode:
+            print("Error reading from camera")
+            return False
+
         cv2.flip(frame,1,frame)
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -140,9 +133,13 @@ def TrackWand():
         cv2.waitKey(1)
 
         # get next frame
-        frame = cam.capture(stream, format='jpeg')
-        data3 = np.fromstring(stream.getvalue(), dtype=np.uint8)
-        frame = cv2.imdecode(data3, 1)
+        # Read next frame from camera
+        returnCode, old_frame = cam.read()
+        
+        # If returnCode is not true, error has occured
+        if not returnCode:
+            print("Error reading from camera")
+            return False
 
         # Now update the previous frame and previous points
         old_gray = frame_gray.copy()
@@ -182,24 +179,32 @@ def IsGesture(a,b,c,d,i):
     #check for gesture patterns in array
     astr = ''.join(map(str, ig[i]))
     if "rightup" in astr:
-        Spell("Lumos")
+        print("Spell(\"Lumos\")")
     elif "rightdown" in astr:
-        Spell("Nox")
+        print("Spell(\"Nox\")")
     elif "leftdown" in astr:
-        Spell("Colovaria")
+        print("Spell(\"Colovaria\")")
     print(astr)
 
 def End():
-	cam.close()
+	cam.release()
 	cv2.destroyAllWindows()
 
+# Starts camera input and runs FindNewPoints
 if __name__=="__main__":
-# Scan starts camera input and runs FindNewPoints
+    # Create window for displaying picture
     cv2.namedWindow("Raspberry Potter")
-    stream = io.BytesIO()
-    cam = picamera.PiCamera()
-    cam.resolution = (640, 480)
-    cam.framerate = 24
+    
+    # Open camera
+    cam = cv2.VideoCapture(0)
+    if cam.isOpened():
+        print("Camera started")
+    
+    # Set camera resolution
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
+    
+    # Start running main loop
     try:
         running = True
         while running:
