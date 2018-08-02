@@ -51,22 +51,6 @@ lk_params = dict( winSize  = (15,15),
 dilation_params = (5, 5)
 movment_threshold = 80
 
-Scan()
-
-# Scan starts camera input and runs FindNewPoints
-def Scan():
-    cv2.namedWindow("Raspberry Potter")
-    stream = io.BytesIO()
-    cam = picamera.PiCamera()
-    cam.resolution = (640, 480)
-    cam.framerate = 24
-    try:
-        while True:
-            FindNewPoints()
-    except KeyboardInterrupt:
-        End()
-        exit
-
 #FindWand is called to find all potential wands in a scene.  These are then tracked as points for movement.  The scene is reset every 3 seconds.
 def FindNewPoints():
     global old_frame,old_gray,p0,mask,color,ig,img,frame
@@ -212,3 +196,18 @@ def IsGesture(a,b,c,d,i):
 def End():
 	cam.close()
 	cv2.destroyAllWindows()
+
+if __name__=="__main__":
+# Scan starts camera input and runs FindNewPoints
+    cv2.namedWindow("Raspberry Potter")
+    stream = io.BytesIO()
+    cam = picamera.PiCamera()
+    cam.resolution = (640, 480)
+    cam.framerate = 24
+    try:
+        while True:
+            FindNewPoints()
+    except KeyboardInterrupt:
+        End()
+        exit
+
