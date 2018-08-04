@@ -30,7 +30,7 @@ import time
 
 #FindWand is called to find all potential wands in a scene.  These are then tracked as points for movement.  The scene is reset every 3 seconds.
 def FindNewPoints():
-    global old_frame,old_gray,p0,mask,color,ig,img
+    global old_frame,old_gray,p0,mask,color,ig
     
     old_frame = getFrame(cam)
     old_gray = cv2.cvtColor(old_frame,cv2.COLOR_BGR2GRAY)
@@ -48,7 +48,7 @@ def FindNewPoints():
     return True
     
 def TrackWand():
-    global old_frame,old_gray,p0,mask,color,ig,img
+    global old_frame,old_gray,p0,mask,color,ig
     
     # Parameters for image processing
     lk_params = dict( winSize  = (15,15),
@@ -102,12 +102,7 @@ def TrackWand():
             print("TrackWand Error: %s" % e )
             End()
             break
-        img = cv2.add(frame,mask)
-
-        cv2.putText(img, "Press ESC to close.", (5, 25),
-                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255))
-        cv2.imshow("Raspberry Potter", img)
-        cv2.waitKey(1)
+        updateWindow(cv2.add(frame,mask))
 
         # get next frame
         old_frame = getFrame(cam)
@@ -172,6 +167,12 @@ def getFrame(cam):
 
     cv2.flip(frame,1,frame)
     return frame
+
+def updateWindow(img):
+    cv2.putText(img, "Press ESC to close.", (5, 25),
+            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255))
+    cv2.imshow("Raspberry Potter", img)
+    cv2.waitKey(1)
 
 # Starts camera input and runs FindNewPoints
 if __name__=="__main__":
