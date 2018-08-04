@@ -30,21 +30,30 @@ import time
 
 #FindWand is called to find all potential wands in a scene.  These are then tracked as points for movement.  The scene is reset every 3 seconds.
 def FindNewPoints():
-    global old_frame,old_gray,p0,mask,color,ig
+    global old_frame,old_gray,p0,ig
     
+    # Get image from camera
     old_frame = getFrame(cam)
+    
+    # Convert image to greyscale
     old_gray = cv2.cvtColor(old_frame,cv2.COLOR_BGR2GRAY)
 
     #TODO: trained image recognition
+    
+    # Get circles in image
+    # Function returns array of coordinates of center points and radii in format (x, y, radius)
     p0 = cv2.HoughCircles(old_gray,cv2.HOUGH_GRADIENT,3,100,param1=100,param2=30,minRadius=4,maxRadius=15)
+    
+    # Reshape array - possibly unnecessary?
     p0.shape = (p0.shape[1], 1, p0.shape[2])
+    
+    # Strip array of the radius
     p0 = p0[:,:,0:2]
-    mask = np.zeros_like(old_frame)
+    
+    # Create/reset array of gesture data
     ig = [[0] for x in range(20)]
-    print("finding...")
-    TrackWand()
-    #This resets the scene every three seconds
-    threading.Timer(3, FindNewPoints).start()
+    
+    print("Found points")
     return True
     
 def TrackWand():
@@ -193,6 +202,8 @@ if __name__=="__main__":
         running = True
         while running:
             if not FindNewPoints():
+                running = False
+            elif not TrackWand():
                 running = False
             elif cv2.getWindowProperty("Raspberry Potter", 0) < 0:
                 # Is window still open? If not, stop running
