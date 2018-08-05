@@ -30,22 +30,22 @@ import time
 
 #FindWand is called to find all potential wands in a scene.  These are then tracked as points for movement.  The scene is reset every 3 seconds.
 def FindNewPoints():
-    global old_frame,old_gray,p0,ig,running
+    global p0,ig,running
     
     if not running:
         return False
     
     # Get image from camera
-    old_frame = getFrame(cam)
+    frame = getFrame(cam)
     
     # Convert image to greyscale
-    old_gray = cv2.cvtColor(old_frame,cv2.COLOR_BGR2GRAY)
+    frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
 
     #TODO: trained image recognition
     
     # Get circles in image
     # Function returns array of coordinates of center points and radii in format (x, y, radius)
-    p0 = cv2.HoughCircles(old_gray,cv2.HOUGH_GRADIENT,3,100,param1=100,param2=30,minRadius=4,maxRadius=15)
+    p0 = cv2.HoughCircles(frame_gray,cv2.HOUGH_GRADIENT,3,100,param1=100,param2=30,minRadius=4,maxRadius=15)
     
     # Reshape array - possibly unnecessary?
     p0.shape = (p0.shape[1], 1, p0.shape[2])
@@ -64,7 +64,7 @@ def FindNewPoints():
     return True
     
 def TrackWand():
-    global old_frame,old_gray,p0
+    global p0
     
     # Parameters for image processing
     lk_params = dict( winSize  = (15,15),
@@ -73,6 +73,10 @@ def TrackWand():
     movment_threshold = 80
 
     color = (0,0,255)
+
+    # Get initial frame
+    old_frame = getFrame(cam)
+    old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
     # Get initial points from FindNewPoints thread
     old_points = p0
