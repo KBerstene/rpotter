@@ -80,6 +80,7 @@ def TrackWand():
 
     # Get initial points from FindNewPoints thread
     old_points = p0
+    p0 = None
 
 	# Create a mask image for drawing purposes
     mask = np.zeros_like(old_frame)
@@ -99,8 +100,9 @@ def TrackWand():
                 a,b = new.ravel()
                 c,d = old.ravel()
                 # only try to detect gesture on highly-rated points (below 15)
-                if (i<15):
-                    IsGesture(a,b,c,d,i)
+                # Need to sort by error before this will work, so I'm removing it to rework it
+                if True:
+                    # IsGesture(a,b,c,d,i)
                     dist = math.hypot(a - c, b - d)
                     if (dist<movment_threshold):
                         cv2.line(mask, (a,b),(c,d),(0,255,0), 2)
@@ -117,7 +119,27 @@ def TrackWand():
         # Now update the previous frame and previous points
         old_gray = frame_gray.copy()
         old_points = good_new.reshape(-1,1,2)
-        old_points = np.concatenate((old_points, p0), axis=0)
+        
+        if p0 is not None:
+            # Add newly discovered points to array
+            old_points = np.concatenate((old_points, p0), axis=0)
+            
+            # Clear newly discovered points array
+            p0 = None
+            
+            # Clean up excess points
+            old_points = RemoveDuplicatePoints(old_points)
+
+def RemoveDuplicatePoints(points):
+    threshold = 20
+    
+    for i in range(len(points)):
+        for j in reversed(range(i+1, len(points))):
+            if (abs(points[i][0][0] - points[j][0][0]) < threshold) and (abs(points[i][0][1] - points[j][0][1]) < threshold):
+                #print("Duplicate points found:", i, j, "(", points[i][0][0], points[j][0][1], "), (", points[i][0][0], points[j][0][1], ")")
+                points = np.delete(points,j,0)
+    
+    return points
 
 #Spell is called to translate a named spell into GPIO or other actions
 def Spell(spell):
