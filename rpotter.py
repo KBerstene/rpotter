@@ -53,11 +53,15 @@ def FindNewPoints():
     # Create/reset array of gesture data
     ig = [[0] for x in range(20)]
     
+    # Create new thread to be called in 3 seconds
+    threading.Timer(3, FindNewPoints).start()
+    
+    # Print debug info and end method
     print("Found points")
     return True
     
 def TrackWand():
-    global old_frame,old_gray,p0,mask,color,ig
+    global old_frame,old_gray,mask
     
     # Parameters for image processing
     lk_params = dict( winSize  = (15,15),
@@ -66,17 +70,10 @@ def TrackWand():
     movment_threshold = 80
 
     color = (0,0,255)
-    
-    old_frame = getFrame(cam)
-    old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
-    # Take first frame and find circles in it
-    p0 = cv2.HoughCircles(old_gray,cv2.HOUGH_GRADIENT,3,100,param1=100,param2=30,minRadius=4,maxRadius=15)
-    try:
-        p0.shape = (p0.shape[1], 1, p0.shape[2])
-        p0 = p0[:,:,0:2]
-    except:
-        print("No points found")
+    # Get initial points from FindNewPoints thread
+    old_points = p0
+
 	# Create a mask image for drawing purposes
     mask = np.zeros_like(old_frame)
 
@@ -86,10 +83,10 @@ def TrackWand():
 
         try:
             # calculate optical flow
-            p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
+            new_points, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, old_points, None, **lk_params)
             # Select good points
-            good_new = p1[st==1]
-            good_old = p0[st==1]
+            good_new = new_points[st==1]
+            good_old = old_points[st==1]
             # draw the tracks
             for i,(new,old) in enumerate(zip(good_new,good_old)):
                 a,b = new.ravel()
@@ -113,12 +110,10 @@ def TrackWand():
             break
         updateWindow(cv2.add(frame,mask))
 
-        # get next frame
-        old_frame = getFrame(cam)
-
         # Now update the previous frame and previous points
         old_gray = frame_gray.copy()
-        p0 = good_new.reshape(-1,1,2)
+        old_points = good_new.reshape(-1,1,2)
+        old_points = np.concatenate((old_points, p0), axis=0)
 
 #Spell is called to translate a named spell into GPIO or other actions
 def Spell(spell):
@@ -141,6 +136,7 @@ def Spell(spell):
 
 #IsGesture is called to determine whether a gesture is found within tracked points
 def IsGesture(a,b,c,d,i):
+    global ig
     print("point: %s" % i)
     #record basic movements - TODO: trained gestures
     if ((a<(c-5))&(abs(b-d)<1)):
@@ -200,10 +196,9 @@ if __name__=="__main__":
     # Start running main loop
     try:
         running = True
+        FindNewPoints()
         while running:
-            if not FindNewPoints():
-                running = False
-            elif not TrackWand():
+            if not TrackWand():
                 running = False
             elif cv2.getWindowProperty("Raspberry Potter", 0) < 0:
                 # Is window still open? If not, stop running
