@@ -30,7 +30,7 @@ import time
 
 #FindWand is called to find all potential wands in a scene.  These are then tracked as points for movement.  The scene is reset every 3 seconds.
 def FindNewPoints():
-    global p0,ig,running
+    global found_points,ig,running
     
     if not running:
         return False
@@ -53,6 +53,9 @@ def FindNewPoints():
     # Strip array of the radius
     p0 = p0[:,:,0:2]
     
+    # Pass points to TrackWand via found_points variable
+    found_points = p0
+    
     # Create/reset array of gesture data
     ig = [[0] for x in range(20)]
     
@@ -64,7 +67,7 @@ def FindNewPoints():
     return True
     
 def TrackWand():
-    global p0
+    global found_points
     
     # Parameters for image processing
     lk_params = dict( winSize  = (15,15),
@@ -79,8 +82,8 @@ def TrackWand():
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
     # Get initial points from FindNewPoints thread
-    old_points = p0
-    p0 = None
+    old_points = found_points
+    found_points = None
 
 	# Create a mask image for drawing purposes
     mask = np.zeros_like(old_frame)
@@ -120,12 +123,12 @@ def TrackWand():
         old_gray = frame_gray.copy()
         old_points = good_new.reshape(-1,1,2)
         
-        if p0 is not None:
+        if found_points is not None:
             # Add newly discovered points to array
-            old_points = np.concatenate((old_points, p0), axis=0)
+            old_points = np.concatenate((old_points, found_points), axis=0)
             
             # Clear newly discovered points array
-            p0 = None
+            found_points = None
             
             # Clean up excess points
             old_points = RemoveDuplicatePoints(old_points)
@@ -136,7 +139,6 @@ def RemoveDuplicatePoints(points):
     for i in range(len(points)):
         for j in reversed(range(i+1, len(points))):
             if (abs(points[i][0][0] - points[j][0][0]) < threshold) and (abs(points[i][0][1] - points[j][0][1]) < threshold):
-                #print("Duplicate points found:", i, j, "(", points[i][0][0], points[j][0][1], "), (", points[i][0][0], points[j][0][1], ")")
                 points = np.delete(points,j,0)
     
     return points
