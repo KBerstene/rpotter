@@ -64,7 +64,7 @@ def FindNewPoints():
     return True
     
 def TrackWand():
-    global old_frame,old_gray,mask
+    global old_frame,old_gray,p0
     
     # Parameters for image processing
     lk_params = dict( winSize  = (15,15),
@@ -120,7 +120,6 @@ def Spell(spell):
     #clear all checks
     ig = [[0] for x in range(15)]
     #Invoke IoT (or any other) actions here
-    cv2.putText(mask, spell, (5, 25),cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,0,0))
     if (spell=="Colovaria"):
         print("GPIO trinket")
         pi.write(trinket_pin,0)
